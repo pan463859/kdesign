@@ -1,11 +1,110 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Cascader render null or undefined without errors 1`] = `
+<Cascader>
+  <div
+    className="kd-cascader-picker kd-cascader-single"
+    tabIndex={0}
+  >
+    <div
+      className="kd-cascader-single-wrapper"
+    >
+      <Input
+        borderType="underline"
+        className="kd-cascader-picker-input"
+        readOnly={true}
+        suffix={
+          <Icon
+            className=""
+            type="arrow-down"
+          />
+        }
+        value={Array []}
+      >
+        <ClearableInput
+          borderType="underline"
+          className="kd-cascader-picker-input"
+          element={
+            <input
+              className="kd-input kd-input-size-middle kd-input-underline"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              onKeyUp={[Function]}
+              readOnly={true}
+              type="text"
+              value={Array []}
+            />
+          }
+          focused={false}
+          handleReset={[Function]}
+          inputCount={null}
+          inputType="input"
+          prefixCls="kd-input"
+          readOnly={true}
+          size="middle"
+          suffix={
+            <Icon
+              className=""
+              type="arrow-down"
+            />
+          }
+          type="text"
+          value={Array []}
+        >
+          <span
+            className="kd-input-wrapper kd-input-wrapper-size-middle kd-input-wrapper-underline kd-cascader-picker-input"
+            onClick={[Function]}
+            onMouseEnter={[Function]}
+            onMouseLeave={[Function]}
+          >
+            <input
+              className="kd-input kd-input-size-middle kd-input-underline"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              onKeyUp={[Function]}
+              readOnly={true}
+              style={null}
+              type="text"
+              value={Array []}
+            />
+            <span
+              className="kd-input-suffix"
+              onMouseDown={[Function]}
+            >
+              <Icon
+                className=""
+                type="arrow-down"
+              >
+                <i
+                  className="kdicon kdicon-arrow-down"
+                  onClick={[Function]}
+                  onMouseEnter={[Function]}
+                  onMouseLeave={[Function]}
+                  style={Object {}}
+                />
+              </Icon>
+            </span>
+          </span>
+        </ClearableInput>
+      </Input>
+      <span
+        className="kd-cascader-picker-label"
+      />
+    </div>
+  </div>
+</Cascader>
+`;
+
 exports[`Cascader renders correctly 1`] = `
-<span
-  class="kd-cascader-picker"
+<div
+  class="kd-cascader-picker kd-cascader-single"
   tabindex="0"
 >
-  <span>
+  <div
+    class="kd-cascader-single-wrapper"
+  >
     <span
       class="kd-input-wrapper kd-input-wrapper-size-middle kd-input-wrapper-underline kd-cascader-picker-input"
     >
@@ -19,26 +118,26 @@ exports[`Cascader renders correctly 1`] = `
       <span
         class="kd-input-suffix"
       >
-        <span>
-          <i
-            class="kdicon kdicon-arrow-down"
-          />
-        </span>
+        <i
+          class="kdicon kdicon-arrow-down"
+        />
       </span>
     </span>
     <span
       class="kd-cascader-picker-label"
     />
-  </span>
-</span>
+  </div>
+</div>
 `;
 
 exports[`Cascader renders correctly 2`] = `
-<span
-  class="kd-cascader-picker"
+<div
+  class="kd-cascader-picker kd-cascader-single"
   tabindex="0"
 >
-  <span>
+  <div
+    class="kd-cascader-single-wrapper"
+  >
     <span
       class="kd-input-wrapper kd-input-wrapper-size-middle kd-input-wrapper-underline kd-cascader-picker-input"
     >
@@ -52,26 +151,26 @@ exports[`Cascader renders correctly 2`] = `
       <span
         class="kd-input-suffix"
       >
-        <span>
-          <i
-            class="kdicon kdicon-arrow-down"
-          />
-        </span>
+        <i
+          class="kdicon kdicon-arrow-down"
+        />
       </span>
     </span>
     <span
       class="kd-cascader-picker-label"
     />
-  </span>
-</span>
+  </div>
+</div>
 `;
 
 exports[`Cascader renders correctly 3`] = `
-<span
-  class="kd-cascader-picker"
+<div
+  class="kd-cascader-picker kd-cascader-single kd-cascader-bordered"
   tabindex="0"
 >
-  <span>
+  <div
+    class="kd-cascader-single-wrapper"
+  >
     <span
       class="kd-input-wrapper kd-input-wrapper-size-middle kd-cascader-picker-input"
     >
@@ -85,16 +184,14 @@ exports[`Cascader renders correctly 3`] = `
       <span
         class="kd-input-suffix"
       >
-        <span>
-          <i
-            class="kdicon kdicon-arrow-down"
-          />
-        </span>
+        <i
+          class="kdicon kdicon-arrow-down"
+        />
       </span>
     </span>
     <span
       class="kd-cascader-picker-label"
     />
-  </span>
-</span>
+  </div>
+</div>
 `;

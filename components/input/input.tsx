@@ -1,4 +1,4 @@
-import React, { FunctionComponentElement, useContext, useState, useRef, useEffect } from 'react'
+import React, { FunctionComponentElement, useContext, useState, useRef, useEffect, useImperativeHandle } from 'react'
 import classNames from 'classnames'
 import ConfigContext from '../config-provider/ConfigContext'
 import { getCompProps } from '../_utils'
@@ -36,7 +36,10 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
   value?: any
   readonly?: 'readonly'
   count?: boolean
+  status?: 'error'
+  style?: Record<string, unknown>
 }
+
 const InternalInput = (props: InputProps, ref: unknown): FunctionComponentElement<InputProps> => {
   const { getPrefixCls, prefixCls, compDefaultProps: userDefaultProps } = useContext(ConfigContext)
   const inputProps = getCompProps('Input', userDefaultProps, props)
@@ -56,6 +59,7 @@ const InternalInput = (props: InputProps, ref: unknown): FunctionComponentElemen
     className,
     maxLength,
     count,
+    status,
     ...others
   } = inputProps
   devWarning(InputSiteTypes.indexOf(size) === -1, 'input', `cannot found input size '${size}'`)
@@ -66,8 +70,7 @@ const InternalInput = (props: InputProps, ref: unknown): FunctionComponentElemen
   })
   const [focused, setFocused] = useState(false)
   const [showNumberMark, setShowNumberMark] = useState(true)
-  const thisInputRef = useRef<HTMLElement>()
-  const inputRef = (ref as any) || thisInputRef
+  const inputRef: any = useRef<HTMLElement>()
   const inputPrefixCls = getPrefixCls!(prefixCls, 'input', customPrefixcls) // 按钮样式前缀
   const { addonBefore, addonAfter } = others
   const inputClasses = classNames(
@@ -76,6 +79,7 @@ const InternalInput = (props: InputProps, ref: unknown): FunctionComponentElemen
       [`${inputPrefixCls}-size-${size}`]: size,
       [`${inputPrefixCls}-borderless`]: borderType === 'none',
       [`${inputPrefixCls}-underline`]: borderType === 'underline',
+      [`${inputPrefixCls}-error`]: status === 'error',
       [`${inputPrefixCls}-disabled`]: disabled,
     },
     { [className!]: className && !hasPrefixSuffix(inputProps) && !addonBefore && !addonAfter },
@@ -129,13 +133,7 @@ const InternalInput = (props: InputProps, ref: unknown): FunctionComponentElemen
     }
     if (count && showNumberMark && !disabled) {
       return (
-        <div
-          className={classNames(`${inputPrefixCls}-input-mark-inner`)}
-          onMouseDown={(e) => {
-            e.stopPropagation()
-            e.preventDefault()
-          }}
-        >
+        <div className={classNames(`${inputPrefixCls}-input-mark-inner`)}>
           {enteredLength}
           {maxLength !== undefined ? `/${maxLength}` : null}
         </div>
@@ -170,6 +168,23 @@ const InternalInput = (props: InputProps, ref: unknown): FunctionComponentElemen
       setShowNumberMark(false)
     }
   }, [focused])
+
+  useImperativeHandle(ref as any, () => {
+    return {
+      input: inputRef.current,
+      focus: () => {
+        setFocused(true)
+        inputRef.current?.focus()
+      },
+      blur: () => {
+        setFocused(false)
+        inputRef.current?.blur()
+      },
+      select: () => {
+        inputRef.current?.select()
+      },
+    }
+  })
 
   return (
     <ClearableInput

@@ -2,7 +2,6 @@
 
 @select-custom-prefix: ~'--@{kd-prefix}-c-select';
 
-
 // color
 @select-dropdown-bg: var(~'@{select-custom-prefix}-dropdown-color-background', @color-background);
 @select-disabled-option-bg: var(~'@{select-custom-prefix}-item-color-background-disabled', #fff);
@@ -41,10 +40,12 @@
 @select-large-height: var(~'@{select-custom-prefix}-sizing-height-large', 36px); // 大号高度 lh:28px
 @select-middle-height: var(~'@{select-custom-prefix}-sizing-height-middle', 30px); // 中号高度lh:22px
 @select-small-height: var(~'@{select-custom-prefix}-sizing-height-small', 24px); // 小号高度lh:12px
+@select-item-max-width: var(~'@{select-custom-prefix}-item-sizing-max-width');
 
 // spacing
 @select-bordered: var(~'@{select-custom-prefix}-bordered-spacing-padding-left', 8px);
 @select-wrapper-padding: var(~'@{select-custom-prefix}-wrapper-spacing-padding', 1px 28px 1px 0);
+@select-dropdown-padding-vertical: var(~'@{select-custom-prefix}-dropdown-spacing-padding-vertical', 8px);
 
 // radius
 @select-g-radius-border: var(~'@{select-custom-prefix}-radius-border', @radius-border);

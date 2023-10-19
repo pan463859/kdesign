@@ -6,6 +6,7 @@ import React, {
   useRef,
   useCallback,
   useImperativeHandle,
+  useMemo,
 } from 'react'
 import Input, { InputProps } from '../input'
 import ConfigContext from '../config-provider/ConfigContext'
@@ -15,6 +16,7 @@ import { formatEditNumber, formatNumber, FormatParam } from '../_utils/formatUti
 import devWarning from '../_utils/devwarning'
 import Big from 'big.js'
 import classNames from 'classnames'
+import useSelectionRange from './useSelectionRange'
 
 export type StepType = 'embed' | 'base'
 
@@ -73,6 +75,7 @@ const InternalInputNumber = (props: InputNumberProps, ref: unknown): FunctionCom
     suffix,
     formatter,
     className,
+    onKeyDown,
     ...others
   } = inputNumberProps
   const initVal = value === undefined ? defaultValue : value
@@ -99,7 +102,10 @@ const InternalInputNumber = (props: InputNumberProps, ref: unknown): FunctionCom
   }
 
   useEffect(() => {
-    setInputValue(value)
+    if (typeof value === 'undefined') {
+      return
+    }
+    setInputValue(serialization(value + ''))
   }, [value])
 
   const handleEventAttachValue = (
@@ -139,6 +145,7 @@ const InternalInputNumber = (props: InputNumberProps, ref: unknown): FunctionCom
     if (legalNumber === false) {
       return false
     }
+    updateSelectionRangePosition(event)
 
     value === undefined && setInputValue(legalNumber)
     onChange && onChange(handleEventAttachValue(event, numberMode ? Number(legalNumber) : legalNumber))
@@ -215,7 +222,7 @@ const InternalInputNumber = (props: InputNumberProps, ref: unknown): FunctionCom
       devWarning(true, 'inputNumber', `stepOption.step必须为一个数值`)
       return false
     }
-    const startingNumber = parseFloat(inputNumberRef.current.value) || 0
+    const startingNumber = parseFloat(inputNumberRef.current?.input?.value) || 0
     const calculationResults = new Big(startingNumber)[type](step).valueOf()
     const legalNumber = verifiValue(calculationResults)
     if (legalNumber === false) {
@@ -226,6 +233,7 @@ const InternalInputNumber = (props: InputNumberProps, ref: unknown): FunctionCom
   }
 
   const handleKeyDown = (event: KeyboardEvent) => {
+    onKeyDown?.(event)
     if (!stepOption || props.disabled || props.readOnly) {
       return
     }
@@ -255,10 +263,12 @@ const InternalInputNumber = (props: InputNumberProps, ref: unknown): FunctionCom
     // 还原最小值
     if (typeof min === 'number' && bigValue.lt(min)) {
       _inputValue = min.toString()
+      onChange?.(handleEventAttachValue(event, numberMode ? Number(_inputValue) : _inputValue))
     }
     // 还原最大值
-    if (typeof min === 'number' && bigValue.gt(max)) {
+    if (typeof max === 'number' && bigValue.gt(max)) {
       _inputValue = max.toString()
+      onChange?.(handleEventAttachValue(event, numberMode ? Number(_inputValue) : _inputValue))
     }
     // 超过精度位数直接截断
     _inputValue = handleNumericalAccuracy(_inputValue)
@@ -277,6 +287,9 @@ const InternalInputNumber = (props: InputNumberProps, ref: unknown): FunctionCom
   }
 
   useEffect(() => {
+    if (typeof value === 'undefined') {
+      return
+    }
     const { isHandleChange, inputFocused } = inputStatus.current
     if (isHandleChange) {
       return
@@ -314,11 +327,20 @@ const InternalInputNumber = (props: InputNumberProps, ref: unknown): FunctionCom
     setValue: (value: any) => setInputValue(value),
   }))
 
+  const displayedInputValue = useMemo<string>(() => {
+    return formatter ? formatter(inputValue) : inputValue
+  }, [inputValue, formatter])
+
+  const updateSelectionRangePosition = useSelectionRange({
+    inputElement: inputNumberRef.current?.input,
+    inputValue: displayedInputValue,
+  })
+
   return (
     <Input
       {...others}
       ref={inputNumberRef}
-      value={inputValue ? formatter?.(inputValue) || inputValue : inputValue}
+      value={displayedInputValue}
       prefix={prefix}
       suffix={suffix}
       onChange={handleChange}

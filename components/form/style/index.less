@@ -39,12 +39,16 @@
     flex-direction: column;
 
     .@{field-label-cls} {
-      margin-bottom: 5px;
+      margin-bottom: @form-field-label-spacing-margin-bottom;
     }
   }
 
   &-hidden {
     display: none !important;
+  }
+
+  &-extra {
+    margin-bottom: calc(@form-field-spacing-margin-bottom * 2);
   }
 }
 
@@ -76,7 +80,8 @@
 
 .@{field-wrapper-cls} {
   position: relative;
-  &-message {
+
+  &-message, &-extra {
     position: absolute;
     left: -7px;
     right: 0;
@@ -88,5 +93,15 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+
+  &-extra {
+    &-message {
+      color: @form-error-color;
+    }
+
+    &-text {
+      color: @form-extra-color;
+    }
   }
 }

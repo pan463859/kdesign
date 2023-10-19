@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react'
+import React, { useMemo, useCallback, useState, useRef, useEffect, useImperativeHandle } from 'react'
 import classNames from 'classnames'
 import { tuple } from '../_utils/type'
 import { getCompProps } from '../_utils'
@@ -57,6 +57,8 @@ export interface CascaderProps extends PopperProps {
   changeOnSelect?: boolean
   notFoundContent?: string
   value?: CascaderValueType
+  maxTagCount?: number
+  maxTagPlaceholder?: React.ReactNode | ((omittedValues: number) => string)
   children?: React.ReactNode
   mode?: 'single' | 'multiple'
   style?: React.CSSProperties
@@ -107,26 +109,29 @@ const Cascader = React.forwardRef<unknown, CascaderProps>((props, ref) => {
     onPopupVisibleChange,
     onPopperVisibleChange,
     prefixCls: customPrefixcls,
+    allowClear: customAllowClear,
+    popupPlacement,
+    maxTagCount,
+    autoFocus,
+    ...otherProps
   } = allProps
 
   // className前缀
   const prefixCls = getPrefixCls!(pkgPrefixCls, 'cascader', customPrefixcls)
 
-  const pickerRef = React.useRef<HTMLSpanElement>()
-  const triggerRef = React.useRef<HTMLSpanElement>()
-  const wrapperRef = React.useRef<HTMLDivElement>()
+  const mergeRef = useRef<HTMLSpanElement>()
+  const inputRef = useRef<HTMLSpanElement>()
+  const wrapperRef = useRef<HTMLDivElement>()
 
-  const mergeRef = (ref || pickerRef) as any
-
-  const [visible, setVisible] = React.useState(!!props.popperVisible || !!props.popupVisible || defaultPopupVisible)
+  const [visible, setVisible] = useState(!!props.popperVisible || !!props.popupVisible || defaultPopupVisible)
   React.useEffect(() => {
     setVisible(!!props.popperVisible || !!props.popupVisible)
   }, [props.popperVisible, props.popupVisible])
 
-  const [menus, setMenus] = React.useState<CascaderOptionType[][]>([options])
-  const [currentOptions, setCurrentOptions] = React.useState<CascaderOptionType[]>([])
-  const [selectedOptions, setSelectedOptions] = React.useState<CascaderOptionType[]>([])
-  const [value, setValue] = React.useState<CascaderValueType>(props.value || defaultValue || [])
+  const [menus, setMenus] = useState<CascaderOptionType[][]>([options])
+  const [currentOptions, setCurrentOptions] = useState<CascaderOptionType[]>([])
+  const [selectedOptions, setSelectedOptions] = useState<CascaderOptionType[]>([])
+  const [value, setValue] = useState<CascaderValueType>(props.value || defaultValue || [])
   React.useEffect(() => {
     props.value && setValue(props.value)
   }, [props.value])
@@ -185,19 +190,54 @@ const Cascader = React.forwardRef<unknown, CascaderProps>((props, ref) => {
     }
   }, [options, value, fieldNames, isMultiple])
 
-  React.useEffect(() => {
-    if (allProps.autoFocus) {
-      mergeRef.current?.focus()
+  const handleFocus = () => {
+    if (!disabled) {
+      if (isMultiple) {
+        mergeRef.current?.focus()
+      } else {
+        inputRef.current?.focus()
+      }
     }
-  }, [allProps.autoFocus, mergeRef])
+  }
+
+  const handleBlur = () => {
+    if (!disabled) {
+      if (isMultiple) {
+        mergeRef.current?.blur()
+      } else {
+        inputRef.current?.blur()
+      }
+    }
+  }
+
+  useImperativeHandle(ref, () => {
+    return {
+      focus: handleFocus,
+      blur: handleBlur,
+      dom: mergeRef.current,
+    }
+  })
+
+  useEffect(() => {
+    if (autoFocus) {
+      handleFocus()
+    }
+  }, [autoFocus, inputRef])
+
+  const handleMouseUp = (e: MouseEvent) => {
+    const cln = (e?.target as Element)?.className
+    const isCloseBtn = cln.indexOf('kd-tag-close-icon') > -1 || cln.indexOf('kdicon') > -1
+    if (isCloseBtn) {
+      e.stopPropagation()
+    }
+  }
 
   React.useEffect(() => {
-    wrapperRef.current?.addEventListener('mouseup', (e: MouseEvent) => {
-      const isCloseBtn = (e?.target as Element)?.className.indexOf('kd-tag-close-icon') > -1
-      if (isCloseBtn) {
-        e.stopPropagation()
-      }
-    })
+    wrapperRef.current?.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      wrapperRef.current?.removeEventListener('mouseup', handleMouseUp)
+    }
   }, [])
 
   const labels = useMemo(() => {
@@ -208,29 +248,18 @@ const Cascader = React.forwardRef<unknown, CascaderProps>((props, ref) => {
         )
   }, [currentOptions, fieldNames.label, isMultiple])
 
-  const allowClear = allProps.allowClear && value.length > 0
+  const values = useMemo(() => {
+    return !isMultiple
+      ? currentOptions.map(({ value }: CascaderOptionType) => value as string)
+      : currentOptions.map((option) => option.map(({ value }: CascaderOptionType) => value as string))
+  }, [currentOptions, isMultiple])
 
-  const locatorProps = {
-    style,
-    tabIndex: 0,
-    className: classNames(`${prefixCls}-picker`, className, { expand: visible, allowClear, disabled: disabled }),
-  }
+  const allowClear = customAllowClear && value.length > 0 && !disabled
 
   const handleClear = () => {
+    handleBlur()
+    setVisible(false)
     onChange([])
-  }
-
-  const inputProps: Record<string, unknown> = {
-    value,
-    placeholder,
-    readOnly: true,
-    disabled: disabled,
-    className: classNames(`${prefixCls}-picker-input`, { expand: visible }),
-    suffix: props.suffixIcon || <Icon type="arrow-down" className={classNames({ expand: visible })} />,
-  }
-
-  if (bordered) {
-    inputProps.borderType = 'bordered'
   }
 
   const renderSuffix = () => {
@@ -281,9 +310,9 @@ const Cascader = React.forwardRef<unknown, CascaderProps>((props, ref) => {
   }
 
   const renderMultiple = () => {
-    const { maxTagCount, maxTagPlaceholder } = allProps
     const multipleCls = classNames({
-      disabled: disabled,
+      [`${prefixCls}-expand`]: visible,
+      [`${prefixCls}-disabled`]: disabled,
       [`${prefixCls}-multiple`]: true,
       [`${prefixCls}-bordered`]: bordered,
     })
@@ -294,15 +323,21 @@ const Cascader = React.forwardRef<unknown, CascaderProps>((props, ref) => {
     })
     const TagStyle = { margin: '2px 8px 2px 0', maxWidth: '100%' }
     return (
-      <div className={multipleCls} ref={triggerRef as any} style={style}>
+      <div className={multipleCls} ref={mergeRef as any} style={style} {...otherProps} tabIndex={-1}>
         <div className={`${prefixCls}-multiple-wrapper`} ref={wrapperRef as any}>
           {Array.isArray(currentOptions) && (
             <>
               {currentOptions.map((option: CascaderOptionType[], index: number) => {
                 return (
-                  <span key={JSON.stringify(labels[index])} className={classNames(`${prefixCls}-selection-tag`)}>
+                  <span key={JSON.stringify(values[index])} className={classNames(`${prefixCls}-selection-tag`)}>
                     {(!maxTagCount || index <= maxTagCount - 1) && (
-                      <Tag type="edit" style={TagStyle} closable onClose={(e) => handleRemove(e, option)}>
+                      <Tag
+                        type="edit"
+                        disabled={disabled}
+                        style={TagStyle}
+                        closable
+                        onClose={(e) => handleRemove(e, option)}
+                      >
                         {displayRender(labels[index], option)}
                       </Tag>
                     )}
@@ -327,23 +362,48 @@ const Cascader = React.forwardRef<unknown, CascaderProps>((props, ref) => {
     )
   }
 
-  const renderSingle = () => (
-    <span {...locatorProps} ref={mergeRef}>
-      {React.Children.count(children) === 1 && children.type ? (
-        React.cloneElement(children, { ref: triggerRef as any })
-      ) : (
-        <>
-          <span ref={triggerRef as any}>
-            <Input {...inputProps} />
-            <span className={`${prefixCls}-picker-label`}>
-              {labels?.length ? displayRender(labels, currentOptions) : ''}
-            </span>
-          </span>
-          {allowClear && <Icon type="close-solid" className={`${prefixCls}-picker-close`} onClick={handleClear} />}
-        </>
-      )}
-    </span>
-  )
+  const renderSingle = () => {
+    const inputProps: Record<string, unknown> = {
+      value,
+      ref: inputRef,
+      placeholder,
+      readOnly: true,
+      borderType: bordered ? 'bordered' : 'underline',
+      disabled: disabled,
+      className: classNames(`${prefixCls}-picker-input`, { expand: visible }),
+      suffix: props.suffixIcon || <Icon type="arrow-down" className={classNames({ expand: visible })} />,
+    }
+
+    const singleProps = {
+      style,
+      tabIndex: 0,
+      className: classNames(`${prefixCls}-picker`, className, {
+        [`${prefixCls}-single`]: true,
+        [`${prefixCls}-expand`]: visible,
+        allowClear,
+        [`${prefixCls}-disabled`]: disabled,
+        [`${prefixCls}-bordered`]: bordered,
+      }),
+    }
+
+    return (
+      <div {...singleProps} ref={mergeRef} {...otherProps}>
+        {React.Children.count(children) === 1 && children.type ? (
+          React.cloneElement(children)
+        ) : (
+          <>
+            <div className={`${prefixCls}-single-wrapper`} ref={wrapperRef as any}>
+              <Input {...inputProps} />
+              <span className={`${prefixCls}-picker-label`}>
+                {labels?.length ? displayRender(labels, currentOptions) : ''}
+              </span>
+              {allowClear && <Icon type="close-solid" className={`${prefixCls}-picker-close`} onClick={handleClear} />}
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
 
   const cascaderLocator = isMultiple ? renderMultiple() : renderSingle()
 
@@ -394,8 +454,10 @@ const Cascader = React.forwardRef<unknown, CascaderProps>((props, ref) => {
       ({ [fieldNames.value]: value }: CascaderOptionType) => value as string | number,
     )
 
-    setCurrentOptions(selectedOptions)
-    props.value === undefined && setValue(selectedValue as CascaderValueType)
+    if (typeof props.value === 'undefined') {
+      setCurrentOptions(selectedOptions)
+      setValue(selectedValue as CascaderValueType)
+    }
     props.onChange && props.onChange(selectedValue as CascaderValueType, selectedOptions)
   }
 
@@ -458,7 +520,7 @@ const Cascader = React.forwardRef<unknown, CascaderProps>((props, ref) => {
                           disabled={opt.disabled}
                           onChange={(e) => onMultipleChecked(opt, e.target.checked)}
                           className={`${prefixCls}-checkbox`}
-                        ></Checkbox>
+                        />
                         {node}
                       </>
                     ) : (
@@ -482,12 +544,12 @@ const Cascader = React.forwardRef<unknown, CascaderProps>((props, ref) => {
     gap: 4,
     visible,
     onVisibleChange,
-    trigger: 'click',
+    trigger: expandTrigger,
     getPopupContainer,
     prefixCls: `${prefixCls}-menus`,
-    placement: allProps.popperPlacement || allProps.popupPlacement,
+    placement: allProps.popperPlacement || popupPlacement,
     popperClassName: allProps.popperClassName || allProps.popupClassName,
-    getTriggerElement: () => triggerRef.current,
+    getTriggerElement: () => mergeRef.current,
   }
 
   return usePopper(cascaderLocator, cascaderPopper, popperProps)

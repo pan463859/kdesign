@@ -30,6 +30,7 @@ export interface FormItemProps {
   validateTrigger?: string | string[] // 字段校验的时机
   wrapperWidth?: string | number
   valuePropName?: string
+  extra?: React.ReactNode
 }
 
 const FormEventValuePropNames = ['value', 'checked']
@@ -51,13 +52,12 @@ const generateEventHandler = (handler: EventHandler<any>, validateTrigger?: stri
   return eventHandler
 }
 
-const INNER_VALUE_PROPS_LIST = [
+export const INNER_VALUE_PROPS_LIST = [
   { name: 'Radio', propName: 'checked' },
   { name: 'Checkbox', propName: 'checked' },
   { name: 'Switch', propName: 'checked' },
   { name: 'Upload', propName: 'fileList' },
-  { name: 'Transfer', propName: 'targetKey' },
-  { name: 'RangePicker', propName: 'ranges' },
+  { name: 'Transfer', propName: 'targetKeys' },
 ]
 
 const Field: React.FC<FormItemProps> = (props) => {
@@ -97,6 +97,7 @@ const Field: React.FC<FormItemProps> = (props) => {
     validateTrigger,
     defaultValue,
     valuePropName,
+    extra,
   } = props
 
   const htmlFor = customizeHtmlFor || (name ? `form_${name}_${(Math.random() * 100).toFixed(0)}` : undefined)
@@ -193,6 +194,7 @@ const Field: React.FC<FormItemProps> = (props) => {
       [`${formPrefixCls}-field`]: true,
       [`${formPrefixCls}-field-hidden`]: hidden,
       [`${formPrefixCls}-field-vertical`]: vertical,
+      [`${formPrefixCls}-field-extra`]: extra,
     },
     className,
   )
@@ -205,6 +207,7 @@ const Field: React.FC<FormItemProps> = (props) => {
     if (innerDisplayName === 'RadioGroup' && payload) {
       inputValue = payload[1]
     } else if (
+      evt &&
       Object.prototype.hasOwnProperty.call(evt, 'target') &&
       FormEventValuePropNames.includes(innerValuePropName)
     ) {
@@ -296,12 +299,13 @@ const Field: React.FC<FormItemProps> = (props) => {
         textAlign={labelAlign}
         requiredMark={mergedRequired}
       />
-      <FieldWrapper width={wrapperWidth} validateMessage={validateMessage}>
+      <FieldWrapper width={wrapperWidth} validateMessage={validateMessage} extra={extra}>
         {childrenArray.map((child: React.ReactElement, index) => {
           const keys = mergeProps(
             {
               ...generateEventHandler(handleValueValidate, validateTrigger),
               key: index,
+              status: typeof validateMessage !== 'undefined' ? 'error' : undefined,
               id: customizeHtmlFor ? undefined : htmlFor,
             },
             child,

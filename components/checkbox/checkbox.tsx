@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState, useRef } from 'react'
+import React, { useContext, useEffect, useState, useRef } from 'react'
 import classNames from 'classnames'
 import { GroupContext, CheckboxTypes, CheckboxSizes } from './group'
 import ConfigContext from '../config-provider/ConfigContext'
@@ -51,6 +51,7 @@ const InternalCheckbox: React.ForwardRefRenderFunction<unknown, CheckboxProps> =
   const mergedDisabled = checkboxGroup?.disabled || disabled
   const mergedCheckboxType = checkboxGroup?.checkboxType || checkboxType
   const mergedName = checkboxGroup?.name || name
+  const mergedSize = checkboxGroup?.size || size
 
   const initChecked = checkboxGroup?.groupValue
     ? checkboxGroup?.groupValue.indexOf(value) > -1
@@ -76,7 +77,7 @@ const InternalCheckbox: React.ForwardRefRenderFunction<unknown, CheckboxProps> =
     `cannot found checkbox type '${mergedCheckboxType}'`,
   )
 
-  devWarning(CheckboxSizes.indexOf(size) === -1, 'checkbox', `cannot found size type '${size}'`)
+  devWarning(CheckboxSizes.indexOf(mergedSize) === -1, 'checkbox', `cannot found size type '${mergedSize}'`)
 
   const checkboxPrefixCls = getPrefixCls!(prefixCls, 'checkbox', customPrefixcls)
 
@@ -91,7 +92,7 @@ const InternalCheckbox: React.ForwardRefRenderFunction<unknown, CheckboxProps> =
   const getDefaultClassName = classNames(className, {
     [`${checkboxPrefixCls}`]: true,
     [`${checkboxPrefixCls}-no-child`]: !children,
-    [`${checkboxPrefixCls}-${size}`]: true && !!children,
+    [`${checkboxPrefixCls}-${mergedSize}`]: !!children,
     [`${checkboxPrefixCls}-${mergedCheckboxType}`]: true,
     [`${checkboxPrefixCls}-${mergedCheckboxType}-disabled`]: mergedDisabled,
     checked: selected,
@@ -100,6 +101,7 @@ const InternalCheckbox: React.ForwardRefRenderFunction<unknown, CheckboxProps> =
   const getSquareClassName = classNames(className, {
     [`${checkboxPrefixCls}`]: true,
     [`${checkboxPrefixCls}-${mergedCheckboxType}`]: true,
+    [`${checkboxPrefixCls}-${mergedSize}`]: !!children,
     [`${checkboxPrefixCls}-${mergedCheckboxType}-disabled`]: mergedDisabled,
     [`${checkboxPrefixCls}-${mergedCheckboxType}-checked`]: selected && !mergedDisabled,
     checked: selected,
@@ -131,16 +133,13 @@ const InternalCheckbox: React.ForwardRefRenderFunction<unknown, CheckboxProps> =
     [`${checkboxPrefixCls}-${mergedCheckboxType}-inner`]: true,
   })
 
-  const handleChange = useCallback(
-    (e) => {
-      onChange && onChange(e)
-      checkboxGroup?.onCheckboxGroupChange && checkboxGroup?.onCheckboxGroupChange(value, e.target.checked, e)
-      if (!checkboxGroup?.isControlled) {
-        setSelected(e.target.checked)
-      }
-    },
-    [onChange],
-  )
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange && onChange(e)
+    checkboxGroup?.onCheckboxGroupChange && checkboxGroup?.onCheckboxGroupChange(value, e.target.checked, e)
+    if (!checkboxGroup?.isControlled) {
+      setSelected(e.target.checked)
+    }
+  }
 
   useEffect(() => {
     isBoolean(checked) && checked !== selected && setSelected(checked)
@@ -162,34 +161,36 @@ const InternalCheckbox: React.ForwardRefRenderFunction<unknown, CheckboxProps> =
   }, [])
 
   const getDefaultCheckbox = () => {
+    const inputProps: any = {
+      type: 'checkbox',
+      className: inputClassName,
+      onChange: handleChange,
+      checked: selected,
+      disabled: mergedDisabled,
+      name: mergedName,
+    }
+    if ((value ?? '') !== '') {
+      inputProps.value = value
+    }
     return (
       // eslint-disable-next-line
       <label className={getRootClassName} style={style} ref={labelRef} {...rest}>
         <span className={checkedWrapperClassName}>
-          {selected && (
+          {selected ? (
             <span className={innerIconClassName}>
               <Icon type="right-bold" className={`${checkboxPrefixCls}-${mergedCheckboxType}-inner-icon`} />
             </span>
-          )}
-          <input
-            type="checkbox"
-            className={inputClassName}
-            onChange={handleChange}
-            ref={ref as any}
-            value={value}
-            checked={selected}
-            disabled={mergedDisabled}
-            name={mergedName}
-          />
+          ) : null}
+          <input type="checkbox" ref={ref as any} {...inputProps} />
         </span>
-        {children && <span className={`${checkboxPrefixCls}-children`}>{children}</span>}
-        {!isDefaultType() && (
+        {children ? <span className={`${checkboxPrefixCls}-children`}>{children}</span> : null}
+        {!isDefaultType() ? (
           <span className={triangleClassName}>
             <span className={innerIconClassName}>
               <Icon type="right-bold" className={`${checkboxPrefixCls}-${mergedCheckboxType}-inner-icon`} />
             </span>
           </span>
-        )}
+        ) : null}
       </label>
     )
   }

@@ -62,7 +62,7 @@ const InternalSearch: React.ForwardRefRenderFunction<ISearchProps, IQuickSearchP
 
   const handlePressEnter = useCallback(
     (_: string, event: React.KeyboardEvent) => {
-      onPressEnter && onPressEnter?.(searchRef.current.value, event)
+      onPressEnter && onPressEnter?.(searchRef.current?.input?.value, event)
     },
     [onPressEnter, searchRef],
   )
@@ -100,17 +100,14 @@ const InternalSearch: React.ForwardRefRenderFunction<ISearchProps, IQuickSearchP
     if (!suffix) {
       return null
     }
-    return (
-      !prefix &&
-      (typeof suffix === 'boolean' && suffix ? (
-        <span className={`${searchPrefixCls}-suffix`}>
-          <Icon className="kd-search-prefix" type="search" />
-        </span>
-      ) : (
-        suffix
-      ))
+    return typeof suffix === 'boolean' && suffix ? (
+      <span className={`${searchPrefixCls}-suffix`}>
+        <Icon className="kd-search-prefix" type="search" />
+      </span>
+    ) : (
+      suffix
     )
-  }, [suffix, prefix, searchPrefixCls])
+  }, [suffix, searchPrefixCls])
 
   if (type === 'quick-search') {
     return (

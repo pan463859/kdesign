@@ -22,6 +22,9 @@
   vertical-align: middle;
   color: @radio-font-color;
   font-size: @radio-font-size;
+  max-width: @radio-default-label-max-width;
+  overflow: hidden;
+  min-height: @radio-circle-size;
 
   &::before {
     position: absolute;
@@ -57,6 +60,7 @@
   &-input {
     position: absolute;
     opacity: 0;
+    left: 0;
   }
 
   &>span {
@@ -152,6 +156,7 @@
   border-radius: @radius-size;
   border: @radio-border-width solid @radio-color-border;
   transition: all @transition-duration;
+  max-width: @radio-square-label-max-width;
 
   &::after {
     position: absolute;
@@ -241,7 +246,7 @@
 // 按钮类型（切换按钮）
 .@{radio-button-prefix-cls} {
   .reset-component();
-
+  .ellipsis();
   // 默认状态
   position: relative;
   display: inline-block;
@@ -259,6 +264,7 @@
   border: @radio-border-width solid @radio-color-border;
   border-left: none;
   transition: all @transition-duration;
+  max-width: @radio-button-label-max-width;
 
   &:first-child {
     border-radius: @radius-size 0 0 @radius-size;
